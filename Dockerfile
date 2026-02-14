@@ -24,7 +24,8 @@ FROM nginx:alpine
 COPY --from=builder /app/out /usr/share/nginx/html
 
 # Copy custom Nginx config
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+# Copy custom Nginx config to templates dir for env variable substitution
+COPY nginx.conf /etc/nginx/templates/default.conf.template
 
 EXPOSE 80
 
