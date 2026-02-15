@@ -13,7 +13,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Bell, Send, CheckCircle2, XCircle, Loader2 } from "lucide-react";
+import { Bell, Send, CheckCircle2, XCircle, Loader2, Users } from "lucide-react";
 import { useState } from "react";
 
 export default function NotificationsPage() {
@@ -22,6 +22,10 @@ export default function NotificationsPage() {
   const [testing, setTesting] = useState(false);
   const [testPhone, setTestPhone] = useState("");
   const [triggerResult, setTriggerResult] = useState<{ type: 'success' | 'error', message: string } | null>(null);
+
+  // Client notification state
+  const [sendingClients, setSendingClients] = useState(false);
+  const [clientResult, setClientResult] = useState<{ type: 'success' | 'error', message: string } | null>(null);
 
   const { data: notifications } = useQuery({
     queryKey: ["notifications"],
@@ -35,11 +39,6 @@ export default function NotificationsPage() {
   });
 
   const handleTrigger = async (force: boolean) => {
-    // Confirm removed for debugging user issue
-    // if (!confirm(force 
-    //   ? "Isso enviará alertas mesmo para quem JÁ recebeu hoje. Continuar?" 
-    //   : "Isso enviará alertas manuais. Continuar?")) return;
-
     setSending(true);
     setTriggerResult(null);
     try {
@@ -54,6 +53,24 @@ export default function NotificationsPage() {
       setTriggerResult({ type: 'error', message: err.response?.data?.detail || "Erro ao enviar" });
     } finally {
       setSending(false);
+    }
+  };
+
+  const handleTriggerClients = async (force: boolean) => {
+    setSendingClients(true);
+    setClientResult(null);
+    try {
+      const res = await notificationsApi.triggerClients(force);
+      const d = res.data;
+      setClientResult({
+        type: 'success',
+        message: `✅ Clientes processados!\n📤 Enviados: ${d.sent} | ⏭️ Já enviou hoje: ${d.skipped} | ❌ Falhas: ${d.failed} | 📵 Sem telefone válido: ${d.no_phone}\n👥 Total inativos (30+d): ${d.total_inactive_clients} | 📦 Produtos enviados: ${d.total_products}`
+      });
+      queryClient.invalidateQueries({ queryKey: ["notifications"] });
+    } catch (err: any) {
+      setClientResult({ type: 'error', message: err.response?.data?.detail || "Erro ao enviar notificações de clientes" });
+    } finally {
+      setSendingClients(false);
     }
   };
 
@@ -80,7 +97,7 @@ export default function NotificationsPage() {
             Central de Notificações
           </h1>
           <p className="text-muted-foreground mt-1">
-            Gerencie o envio de alertas automáticos e manuais
+            Gerencie o envio de alertas para empresas e clientes
           </p>
         </div>
         
@@ -107,23 +124,33 @@ export default function NotificationsPage() {
         </div>
       )}
 
+      {clientResult && (
+        <div className={`p-4 rounded-xl border whitespace-pre-line ${
+          clientResult.type === 'success' 
+            ? 'bg-purple-500/10 border-purple-500/20 text-purple-400' 
+            : 'bg-red-500/10 border-red-500/20 text-red-400'
+        }`}>
+          {clientResult.message}
+        </div>
+      )}
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         
         {/* Card de Conexão WhatsApp */}
         <EvolutionConnectionCard />
 
-        {/* Card de Controle Manual */}
+        {/* Card de Controle Manual — Empresas/Vendedores */}
         <Card className="glass-card border-white/5">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Send className="w-5 h-5 text-blue-400" />
-              Disparo Manual
+              Disparo Empresas
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <p className="text-sm text-muted-foreground">
-              Envie alertas de produtos "Muito Críticos" agora. 
-              O sistema verifica automaticamente se já foi enviado hoje para evitar duplicidade.
+              Envia alertas de produtos &quot;Muito Críticos&quot; para <strong>empresas/vendedores</strong>. 
+              Verifica automaticamente se já foi enviado hoje.
             </p>
             <div className="flex gap-3">
               <Button 
@@ -141,6 +168,44 @@ export default function NotificationsPage() {
               >
                 Forçar Reenvio
               </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Card de Controle Manual — Clientes */}
+        <Card className="glass-card border-white/5">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Users className="w-5 h-5 text-purple-400" />
+              Disparo Clientes
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              Envia alertas para <strong>clientes inativos há mais de 30 dias</strong> sem comprar. 
+              Números são normalizados com prefixo &quot;55&quot; automaticamente.
+            </p>
+            <div className="flex gap-3">
+              <Button 
+                onClick={() => handleTriggerClients(false)} 
+                disabled={sendingClients}
+                className="flex-1 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500"
+              >
+                {sendingClients ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : "Disparar Clientes"}
+              </Button>
+              <Button 
+                onClick={() => handleTriggerClients(true)} 
+                disabled={sendingClients}
+                variant="destructive"
+                className="flex-1 bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/50"
+              >
+                Forçar Reenvio
+              </Button>
+            </div>
+            <div className="text-[11px] text-muted-foreground space-y-0.5">
+              <p>• Apenas clientes com DTULTCOMPRA_GERAL &gt; 30 dias</p>
+              <p>• Números sem DDD/DDI válido são ignorados</p>
+              <p>• Máximo 1 envio por cliente por dia</p>
             </div>
           </CardContent>
         </Card>
@@ -202,8 +267,12 @@ export default function NotificationsPage() {
                 <TableRow key={n.id} className="border-white/5 hover:bg-white/5 transition-colors">
                   <TableCell className="font-mono text-xs">{n.phone}</TableCell>
                   <TableCell>
-                    <Badge variant="outline" className="border-white/10">
-                      {n.direction === 'outbound' ? 'Saída' : 'Entrada'}
+                    <Badge variant="outline" className={
+                      n.notification_type === 'client' 
+                        ? 'border-purple-500/30 text-purple-400' 
+                        : 'border-white/10'
+                    }>
+                      {n.notification_type === 'client' ? '👤 Cliente' : '🏢 Empresa'}
                     </Badge>
                   </TableCell>
                   <TableCell>

@@ -11,6 +11,7 @@ import {
   BarChart3,
   PieChart as PieIcon,
   Clock,
+  HelpCircle,
 } from "lucide-react";
 import {
   BarChart,
@@ -33,6 +34,7 @@ const INACTIVITY_COLORS: Record<string, string> = {
   "Inativo 30-60d": "#eab308",
   "Inativo 60-90d": "#ef4444",
   "Inativo > 90d": "#09090b",
+  "Sem Data": "#6b7280",
 };
 
 const CHART_COLORS = ["#3b82f6", "#8b5cf6", "#06b6d4", "#22c55e", "#eab308", "#ef4444", "#ec4899"];
@@ -168,7 +170,7 @@ export default function ClientsPage() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-4">
         <StatCard
           title="Total Clientes"
           value={formatNumber(stats?.total_clients || 0)}
@@ -200,6 +202,14 @@ export default function ClientsPage() {
           gradientFrom="#09090b"
           gradientTo="#27272a"
           glow="glow-zinc"
+        />
+        <StatCard
+          title="Sem Data"
+          value={formatNumber(stats?.sem_data || 0)}
+          icon={HelpCircle}
+          gradientFrom="#6b7280"
+          gradientTo="#4b5563"
+          glow=""
         />
       </div>
 
