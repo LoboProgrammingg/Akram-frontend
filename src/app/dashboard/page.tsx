@@ -520,6 +520,13 @@ export default function DashboardPage() {
           icon={TrendingUp}
           gradientFrom="#06b6d4" gradientTo="#0891b2" glow="glow-cyan"
         />
+        <StatCard
+          title="WhatsApp Válidos"
+          value={formatNumber(cStats?.valid_mobile_count || 0)}
+          icon={Send} 
+          gradientFrom="#22c55e" gradientTo="#16a34a" glow="glow-green"
+          suffix="nums"
+        />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
