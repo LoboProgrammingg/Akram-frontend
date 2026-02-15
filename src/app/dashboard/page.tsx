@@ -46,6 +46,8 @@ const CLASSE_COLORS: Record<string, string> = {
   "ATENÇÃO": "#eab308",
   ATENCION: "#eab308",
   ATENCAO: "#eab308",
+  AMARELO: "#eab308",
+  YELLOW: "#eab308",
   OUTROS: "#22c55e",
 };
 
