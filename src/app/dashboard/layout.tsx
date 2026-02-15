@@ -17,12 +17,16 @@ import {
   Menu,
   X,
   ChevronRight,
+  Users,
+  UploadCloud,
 } from "lucide-react";
 
 const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/dashboard/products", label: "Produtos", icon: Package },
-  { href: "/dashboard/upload", label: "Upload", icon: Upload },
+  { href: "/dashboard/upload", label: "Upload Produtos", icon: Upload },
+  { href: "/dashboard/clients", label: "Clientes", icon: Users },
+  { href: "/dashboard/client-upload", label: "Upload Clientes", icon: UploadCloud },
   { href: "/dashboard/phone-numbers", label: "Telefones", icon: Phone },
   { href: "/dashboard/notifications", label: "Notificações", icon: Bell },
   { href: "/dashboard/ai", label: "IA / RAG", icon: Brain },

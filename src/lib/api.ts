@@ -84,10 +84,33 @@ export const phoneNumbersApi = {
 export const notificationsApi = {
   list: (page = 1) => api.get("/api/notifications", { params: { page } }),
   trigger: (force = false) => api.post("/api/notifications/trigger", {}, { params: { force } }),
+  triggerClients: (force = false) => api.post("/api/notifications/trigger-clients", {}, { params: { force } }),
   test: (phone: string) => api.post("/api/notifications/test", { phone }),
   schedulerStatus: () => api.get("/api/notifications/scheduler-status"),
   evolutionStatus: () => api.get("/api/notifications/evolution/status"),
   evolutionQr: () => api.get("/api/notifications/evolution/qr"),
+};
+
+// Clients
+export const clientsApi = {
+  list: (params: Record<string, string | number | undefined>) =>
+    api.get("/api/clients", { params }),
+  stats: () => api.get("/api/clients/stats"),
+  summary: () => api.get("/api/clients/summary"),
+  inactive: (days = 30) => api.get("/api/clients/inactive", { params: { days } }),
+  filters: () => api.get("/api/clients/filters"),
+};
+
+// Client Uploads
+export const clientUploadsApi = {
+  upload: (file: File) => {
+    const formData = new FormData();
+    formData.append("file", file);
+    return api.post("/api/client-uploads", formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+  },
+  list: () => api.get("/api/client-uploads"),
 };
 
 // AI
