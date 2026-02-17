@@ -190,7 +190,7 @@ export default function ProductsPage() {
                 <TableHead className="text-xs font-medium text-muted-foreground">Qtd.</TableHead>
                 <TableHead className="text-xs font-medium text-muted-foreground">Validade</TableHead>
                 <TableHead className="text-xs font-medium text-muted-foreground">Classe</TableHead>
-                <TableHead className="text-xs font-medium text-muted-foreground">Custo Total</TableHead>
+                <TableHead className="text-xs font-medium text-muted-foreground">Valor Unit.</TableHead>
                 <TableHead className="text-xs font-medium text-muted-foreground">UF</TableHead>
               </TableRow>
             </TableHeader>
@@ -223,8 +223,8 @@ export default function ProductsPage() {
                       </TableCell>
                       <TableCell>{classeBadge(p.classe)}</TableCell>
                       <TableCell className="text-xs">
-                        {p.custo_total
-                          ? new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(p.custo_total)
+                        {p.preco_com_st != null
+                          ? new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(p.preco_com_st)
                           : "-"}
                       </TableCell>
                       <TableCell className="text-xs">{p.uf || "-"}</TableCell>

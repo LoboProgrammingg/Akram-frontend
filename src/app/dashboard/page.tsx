@@ -21,6 +21,9 @@ import {
   TrendingUp,
   ShieldAlert,
   Activity,
+  MapPin,
+  Calendar,
+  Flame,
 } from "lucide-react";
 import {
   BarChart,
@@ -201,6 +204,10 @@ export default function DashboardPage() {
   const pCharts = data?.products?.charts || data?.charts;
   const classeData = pCharts?.by_classe || [];
   const totalProducts = classeData.reduce((s: number, d: any) => s + d.count, 0);
+  const topCritical = data?.products?.top_critical || data?.top_critical || [];
+  const valueSummary = data?.products?.value_summary || data?.value_summary || {};
+  const expiryByWeek = pCharts?.expiry_by_week || [];
+  const byUf = pCharts?.by_uf || [];
 
   // Client data
   const cStats = data?.clients?.stats;
@@ -474,6 +481,222 @@ export default function DashboardPage() {
                 </Bar>
               </BarChart>
             </ResponsiveContainer>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* ═══════════════════════════════════════════
+          SECTION 2B: ANÁLISE AVANÇADA DE PRODUTOS
+          ═══════════════════════════════════════════ */}
+      <SectionHeader
+        icon={Flame}
+        title="Análise Avançada"
+        subtitle="Top produtos críticos e previsão de vencimentos"
+        color="bg-red-500/10 text-red-400"
+      />
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        {/* TOP CRITICAL PRODUCTS TABLE */}
+        <Card className="glass-card border-0">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-semibold flex items-center gap-2">
+              <div className="w-6 h-6 rounded-lg bg-red-500/10 flex items-center justify-center">
+                <AlertOctagon className="w-3 h-3 text-red-400" />
+              </div>
+              🔥 Top 10 Produtos Muito Críticos
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="pt-0">
+            <div className="max-h-[320px] overflow-y-auto">
+              <table className="w-full text-xs">
+                <thead className="sticky top-0 bg-background/95 backdrop-blur">
+                  <tr className="border-b border-white/5">
+                    <th className="text-left py-2 px-1 font-medium text-muted-foreground">Produto</th>
+                    <th className="text-right py-2 px-1 font-medium text-muted-foreground">Qtd</th>
+                    <th className="text-right py-2 px-1 font-medium text-muted-foreground">Vence</th>
+                    <th className="text-right py-2 px-1 font-medium text-muted-foreground">Valor</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {topCritical.length === 0 ? (
+                    <tr>
+                      <td colSpan={4} className="text-center py-8 text-muted-foreground">
+                        Nenhum produto muito crítico
+                      </td>
+                    </tr>
+                  ) : (
+                    topCritical.map((p: any, i: number) => (
+                      <tr key={p.id || i} className="border-b border-white/5 hover:bg-white/3">
+                        <td className="py-2 px-1 max-w-[180px] truncate" title={p.descricao}>
+                          <span className="font-medium">{p.descricao}</span>
+                          <span className="block text-[10px] text-muted-foreground">
+                            Cód: {p.codigo} • {p.filial}
+                          </span>
+                        </td>
+                        <td className="py-2 px-1 text-right font-mono">
+                          {p.quantidade?.toLocaleString("pt-BR") || "-"}
+                        </td>
+                        <td className="py-2 px-1 text-right">
+                          <span className={`px-1.5 py-0.5 rounded text-[10px] font-medium ${
+                            p.validade && new Date(p.validade) <= new Date() 
+                              ? "bg-red-500/20 text-red-400" 
+                              : "bg-amber-500/20 text-amber-400"
+                          }`}>
+                            {p.validade ? new Date(p.validade).toLocaleDateString("pt-BR") : "-"}
+                          </span>
+                        </td>
+                        <td className="py-2 px-1 text-right font-mono text-emerald-400">
+                          {p.preco_com_st ? formatCurrency(p.preco_com_st) : "-"}
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* STACKED BAR — Expiry by Week */}
+        <Card className="glass-card border-0">
+          <CardHeader className="pb-0">
+            <CardTitle className="text-sm font-semibold flex items-center gap-2">
+              <div className="w-6 h-6 rounded-lg bg-orange-500/10 flex items-center justify-center">
+                <Calendar className="w-3 h-3 text-orange-400" />
+              </div>
+              Vencimentos por Semana
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="pt-4">
+            <ResponsiveContainer width="100%" height={280}>
+              <BarChart data={expiryByWeek} barSize={40}>
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--grid-stroke)" vertical={false} />
+                <XAxis
+                  dataKey="semana"
+                  tick={{ fill: "var(--tick-fill)", fontSize: 10, fontWeight: 500 }}
+                  axisLine={{ stroke: "var(--axis-stroke)" }}
+                  tickLine={false}
+                />
+                <YAxis
+                  tick={{ fill: "var(--tick-fill)", fontSize: 11 }}
+                  axisLine={false} tickLine={false}
+                />
+                <Tooltip content={<CustomTooltip />} />
+                <Bar dataKey="muito_critico" stackId="a" fill="#09090b" name="Muito Crítico" radius={[0, 0, 0, 0]} />
+                <Bar dataKey="critico" stackId="a" fill="#ef4444" name="Crítico" radius={[0, 0, 0, 0]} />
+                <Bar dataKey="atencao" stackId="a" fill="#eab308" name="Atenção" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+            <div className="flex justify-center gap-4 mt-2">
+              <div className="flex items-center gap-1.5">
+                <div className="w-2.5 h-2.5 rounded-full bg-zinc-900" />
+                <span className="text-[10px] text-muted-foreground">Muito Crítico</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <div className="w-2.5 h-2.5 rounded-full bg-red-500" />
+                <span className="text-[10px] text-muted-foreground">Crítico</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <div className="w-2.5 h-2.5 rounded-full bg-yellow-500" />
+                <span className="text-[10px] text-muted-foreground">Atenção</span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* BAR — Products by UF/Region */}
+        <Card className="glass-card border-0">
+          <CardHeader className="pb-0">
+            <CardTitle className="text-sm font-semibold flex items-center gap-2">
+              <div className="w-6 h-6 rounded-lg bg-teal-500/10 flex items-center justify-center">
+                <MapPin className="w-3 h-3 text-teal-400" />
+              </div>
+              Produtos por Região (UF)
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="pt-4">
+            <ResponsiveContainer width="100%" height={280}>
+              <BarChart data={byUf} barSize={36} layout="vertical">
+                <defs>
+                  <linearGradient id="bar-fill-uf" x1="0" y1="0" x2="1" y2="0">
+                    <stop offset="0%" stopColor="#14b8a6" stopOpacity={0.9} />
+                    <stop offset="100%" stopColor="#14b8a6" stopOpacity={0.4} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--grid-stroke)" horizontal={false} />
+                <XAxis type="number" tick={{ fill: "var(--tick-fill)", fontSize: 11 }} axisLine={false} tickLine={false} />
+                <YAxis
+                  dataKey="uf"
+                  type="category"
+                  tick={{ fill: "var(--tick-fill)", fontSize: 9, fontWeight: 500 }}
+                  axisLine={{ stroke: "var(--axis-stroke)" }}
+                  tickLine={false}
+                  width={120}
+                />
+                <Tooltip content={<CustomTooltip />} />
+                <Bar dataKey="count" fill="url(#bar-fill-uf)" radius={[0, 8, 8, 0]} animationDuration={1200} />
+              </BarChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+
+        {/* VALUE SUMMARY CARDS */}
+        <Card className="glass-card border-0">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-semibold flex items-center gap-2">
+              <div className="w-6 h-6 rounded-lg bg-emerald-500/10 flex items-center justify-center">
+                <DollarSign className="w-3 h-3 text-emerald-400" />
+              </div>
+              💰 Resumo Financeiro por Classe
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="pt-0">
+            <div className="grid grid-cols-2 gap-3">
+              {/* Muito Crítico */}
+              <div className="p-3 rounded-xl bg-zinc-900/50 border border-zinc-800/50">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="w-2.5 h-2.5 rounded-full bg-zinc-600" />
+                  <span className="text-[10px] font-semibold text-muted-foreground uppercase">Muito Crítico</span>
+                </div>
+                <p className="text-lg font-bold">{formatCurrency(valueSummary?.muito_critico?.total_custo || 0)}</p>
+                <p className="text-[10px] text-muted-foreground">
+                  {formatNumber(valueSummary?.muito_critico?.count || 0)} produtos • {formatNumber(valueSummary?.muito_critico?.total_qtd || 0)} unid.
+                </p>
+              </div>
+              {/* Crítico */}
+              <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/20">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="w-2.5 h-2.5 rounded-full bg-red-500" />
+                  <span className="text-[10px] font-semibold text-muted-foreground uppercase">Crítico</span>
+                </div>
+                <p className="text-lg font-bold text-red-400">{formatCurrency(valueSummary?.critico?.total_custo || 0)}</p>
+                <p className="text-[10px] text-muted-foreground">
+                  {formatNumber(valueSummary?.critico?.count || 0)} produtos • {formatNumber(valueSummary?.critico?.total_qtd || 0)} unid.
+                </p>
+              </div>
+              {/* Atenção */}
+              <div className="p-3 rounded-xl bg-yellow-500/10 border border-yellow-500/20">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="w-2.5 h-2.5 rounded-full bg-yellow-500" />
+                  <span className="text-[10px] font-semibold text-muted-foreground uppercase">Atenção</span>
+                </div>
+                <p className="text-lg font-bold text-yellow-400">{formatCurrency(valueSummary?.atencao?.total_custo || 0)}</p>
+                <p className="text-[10px] text-muted-foreground">
+                  {formatNumber(valueSummary?.atencao?.count || 0)} produtos • {formatNumber(valueSummary?.atencao?.total_qtd || 0)} unid.
+                </p>
+              </div>
+              {/* Total */}
+              <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
+                  <span className="text-[10px] font-semibold text-muted-foreground uppercase">Total Geral</span>
+                </div>
+                <p className="text-lg font-bold text-emerald-400">{formatCurrency(valueSummary?.total?.total_custo || 0)}</p>
+                <p className="text-[10px] text-muted-foreground">
+                  {formatNumber(valueSummary?.total?.count || 0)} produtos • {formatNumber(valueSummary?.total?.total_qtd || 0)} unid.
+                </p>
+              </div>
+            </div>
           </CardContent>
         </Card>
       </div>
