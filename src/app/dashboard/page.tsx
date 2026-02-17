@@ -507,14 +507,14 @@ export default function DashboardPage() {
             </CardTitle>
           </CardHeader>
           <CardContent className="pt-0">
-            <div className="max-h-[320px] overflow-y-auto">
-              <table className="w-full text-xs">
+            <div className="max-h-[320px] overflow-y-auto overflow-x-auto">
+              <table className="w-full text-xs min-w-[500px]">
                 <thead className="sticky top-0 bg-background/95 backdrop-blur">
                   <tr className="border-b border-white/5">
-                    <th className="text-left py-2 px-1 font-medium text-muted-foreground">Produto</th>
-                    <th className="text-right py-2 px-1 font-medium text-muted-foreground">Qtd</th>
-                    <th className="text-right py-2 px-1 font-medium text-muted-foreground">Vence</th>
-                    <th className="text-right py-2 px-1 font-medium text-muted-foreground">Valor</th>
+                    <th className="text-left py-2 px-2 font-medium text-muted-foreground w-[45%]">Produto</th>
+                    <th className="text-right py-2 px-2 font-medium text-muted-foreground w-[12%]">Qtd</th>
+                    <th className="text-right py-2 px-2 font-medium text-muted-foreground w-[20%]">Vence</th>
+                    <th className="text-right py-2 px-2 font-medium text-muted-foreground w-[23%]">Valor</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -527,16 +527,16 @@ export default function DashboardPage() {
                   ) : (
                     topCritical.map((p: any, i: number) => (
                       <tr key={p.id || i} className="border-b border-white/5 hover:bg-white/3">
-                        <td className="py-2 px-1 max-w-[180px] truncate" title={p.descricao}>
-                          <span className="font-medium">{p.descricao}</span>
+                        <td className="py-2 px-2 max-w-[200px]" title={p.descricao}>
+                          <span className="font-medium line-clamp-1">{p.descricao}</span>
                           <span className="block text-[10px] text-muted-foreground">
                             Cód: {p.codigo} • {p.filial}
                           </span>
                         </td>
-                        <td className="py-2 px-1 text-right font-mono">
+                        <td className="py-2 px-2 text-right font-mono whitespace-nowrap">
                           {p.quantidade?.toLocaleString("pt-BR") || "-"}
                         </td>
-                        <td className="py-2 px-1 text-right">
+                        <td className="py-2 px-2 text-right whitespace-nowrap">
                           <span className={`px-1.5 py-0.5 rounded text-[10px] font-medium ${
                             p.validade && new Date(p.validade) <= new Date() 
                               ? "bg-red-500/20 text-red-400" 
@@ -545,7 +545,7 @@ export default function DashboardPage() {
                             {p.validade ? new Date(p.validade).toLocaleDateString("pt-BR") : "-"}
                           </span>
                         </td>
-                        <td className="py-2 px-1 text-right font-mono text-emerald-400">
+                        <td className="py-2 px-2 text-right font-mono text-emerald-400 whitespace-nowrap">
                           {p.preco_com_st ? formatCurrency(p.preco_com_st) : "-"}
                         </td>
                       </tr>
