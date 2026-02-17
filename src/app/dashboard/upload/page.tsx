@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { uploadsApi } from "@/lib/api";
+import { uploadsApi, productsApi } from "@/lib/api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -13,18 +13,70 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Upload, FileSpreadsheet, CheckCircle2, XCircle, Clock, Loader2 } from "lucide-react";
+import { Upload, FileSpreadsheet, CheckCircle2, XCircle, Clock, Loader2, Trash2, RefreshCw } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 export default function UploadPage() {
   const queryClient = useQueryClient();
   const [isDragging, setIsDragging] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [deleting, setDeleting] = useState<number | null>(null);
+  const [recalculating, setRecalculating] = useState(false);
   const [result, setResult] = useState<{ message: string; success: boolean } | null>(null);
 
   const { data: uploads } = useQuery({
     queryKey: ["uploads"],
     queryFn: () => uploadsApi.list().then((r) => r.data),
   });
+
+  const handleRecalculate = useCallback(async () => {
+    setRecalculating(true);
+    setResult(null);
+
+    try {
+      const res = await productsApi.recalculateClasses();
+      setResult({ 
+        message: `${res.data.message} (Data: ${res.data.data_atual})`, 
+        success: true 
+      });
+      queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+      queryClient.invalidateQueries({ queryKey: ["products"] });
+    } catch (err: any) {
+      setResult({
+        message: err.response?.data?.detail || "Erro ao recalcular classificações",
+        success: false,
+      });
+    } finally {
+      setRecalculating(false);
+    }
+  }, [queryClient]);
+
+  const handleDelete = useCallback(
+    async (uploadId: number, uploadName: string) => {
+      if (!confirm(`Tem certeza que deseja deletar "${uploadName}"?\n\nIsso irá remover todos os produtos associados a esta planilha.`)) {
+        return;
+      }
+
+      setDeleting(uploadId);
+      setResult(null);
+
+      try {
+        const res = await uploadsApi.delete(uploadId);
+        setResult({ message: res.data.message, success: true });
+        queryClient.invalidateQueries({ queryKey: ["uploads"] });
+        queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+        queryClient.invalidateQueries({ queryKey: ["products"] });
+      } catch (err: any) {
+        setResult({
+          message: err.response?.data?.detail || "Erro ao deletar upload",
+          success: false,
+        });
+      } finally {
+        setDeleting(null);
+      }
+    },
+    [queryClient]
+  );
 
   const handleUpload = useCallback(
     async (file: File) => {
@@ -76,11 +128,25 @@ export default function UploadPage() {
 
   return (
     <div className="space-y-5 animate-fade-in-up">
-      <div>
-        <h1 className="text-2xl font-bold">Upload de Planilha</h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          Envie arquivos .xlsx ou .csv para importar produtos
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold">Upload de Planilha</h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            Envie arquivos .xlsx ou .csv para importar produtos
+          </p>
+        </div>
+        <Button
+          onClick={handleRecalculate}
+          disabled={recalculating}
+          className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+        >
+          {recalculating ? (
+            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+          ) : (
+            <RefreshCw className="w-4 h-4 mr-2" />
+          )}
+          Recalcular Classes
+        </Button>
       </div>
 
       {/* Upload Zone */}
@@ -164,6 +230,7 @@ export default function UploadPage() {
                 <TableHead className="text-xs">Enviado por</TableHead>
                 <TableHead className="text-xs">Status</TableHead>
                 <TableHead className="text-xs">Data</TableHead>
+                <TableHead className="text-xs text-right">Ações</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -191,11 +258,26 @@ export default function UploadPage() {
                   <TableCell className="text-xs">
                     {u.created_at ? new Date(u.created_at).toLocaleString("pt-BR") : "-"}
                   </TableCell>
+                  <TableCell className="text-right">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-7 w-7 p-0 text-red-400 hover:text-red-300 hover:bg-red-500/10"
+                      onClick={() => handleDelete(u.id, u.original_name)}
+                      disabled={deleting === u.id}
+                    >
+                      {deleting === u.id ? (
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      ) : (
+                        <Trash2 className="w-3.5 h-3.5" />
+                      )}
+                    </Button>
+                  </TableCell>
                 </TableRow>
               ))}
               {!uploads?.length && (
                 <TableRow className="border-white/5">
-                  <TableCell colSpan={5} className="text-center text-xs text-muted-foreground py-8">
+                  <TableCell colSpan={6} className="text-center text-xs text-muted-foreground py-8">
                     Nenhum upload realizado
                   </TableCell>
                 </TableRow>

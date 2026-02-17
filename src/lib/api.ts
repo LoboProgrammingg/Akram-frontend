@@ -49,6 +49,8 @@ export const productsApi = {
   chartsByFilial: () => api.get("/api/products/charts/by-filial"),
   chartsExpiryTimeline: () => api.get("/api/products/charts/expiry-timeline"),
   filters: () => api.get("/api/products/filters"),
+  expiryStatus: () => api.get("/api/products/expiry-status"),
+  recalculateClasses: () => api.post("/api/products/recalculate-classes"),
 };
 
 // Dashboard
@@ -66,6 +68,7 @@ export const uploadsApi = {
     });
   },
   list: () => api.get("/api/uploads"),
+  delete: (id: number) => api.delete(`/api/uploads/${id}`),
 };
 
 // Phone Numbers
