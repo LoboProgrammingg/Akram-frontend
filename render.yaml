@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: akram-frontend
+    runtime: docker
+    repo: https://github.com/LoboProgrammingg/Akram-frontend
+    branch: main
+    plan: free
+    dockerfilePath: ./Dockerfile
+    envVars:
+      - key: NEXT_PUBLIC_API_URL
+        sync: false
+      - key: PORT
+        value: "80"
